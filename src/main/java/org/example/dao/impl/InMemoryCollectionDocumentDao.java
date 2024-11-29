@@ -38,8 +38,18 @@ public class InMemoryCollectionDocumentDao extends InMemoryCollectionDao<Documen
 
     @Override
     public List<DocumentManager.Document> search(DocumentManager.SearchRequest request) {
-        
+        Specification<DocumentManager.Document> specification = new AndSpecification<>(
+                List.of(
+                        new TitlePrefixSpecification(request.getTitlePrefixes()),
+                        new ContainsContentSpecification(request.getContainsContents()),
+                        new AuthorSpecification(request.getAuthorIds()),
+                        new CreatedFromSpecification(request.getCreatedFrom()),
+                        new CreatedToSpecification(request.getCreatedTo())
+                )
+        );
 
-        return null;
+        return connection.stream()
+                .filter(specification::isSatisfiedBy)
+                .collect(Collectors.toList());
     }
 }
