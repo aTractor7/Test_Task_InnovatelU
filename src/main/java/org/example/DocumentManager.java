@@ -2,9 +2,11 @@ package org.example;
 
 import lombok.Builder;
 import lombok.Data;
+import org.example.dao.AuthorDao;
+import org.example.dao.DaoFactory;
+import org.example.dao.DocumentDao;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +21,14 @@ import java.util.Optional;
  */
 public class DocumentManager {
 
+    private final AuthorDao authorDao;
+    private final DocumentDao documentDao;
+
+    public DocumentManager(DaoFactory daoFactory) {
+        this.authorDao = daoFactory.createAuthorDao();
+        this.documentDao = daoFactory.createDocumentDao();
+    }
+
     /**
      * Implementation of this method should upsert the document to your storage
      * And generate unique id if it does not exist, don't change [created] field
@@ -27,8 +37,9 @@ public class DocumentManager {
      * @return saved document
      */
     public Document save(Document document) {
-
-        return null;
+        documentDao.save(document);
+        authorDao.save(document.getAuthor());
+        return document;
     }
 
     /**
@@ -38,8 +49,7 @@ public class DocumentManager {
      * @return list matched documents
      */
     public List<Document> search(SearchRequest request) {
-
-        return Collections.emptyList();
+        return documentDao.search(request);
     }
 
     /**
@@ -49,8 +59,7 @@ public class DocumentManager {
      * @return optional document
      */
     public Optional<Document> findById(String id) {
-
-        return Optional.empty();
+        return documentDao.findById(id);
     }
 
     @Data
@@ -65,18 +74,39 @@ public class DocumentManager {
 
     @Data
     @Builder
-    public static class Document {
+    public static class Document implements Entity{
         private String id;
         private String title;
         private String content;
         private Author author;
         private Instant created;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
     }
 
     @Data
     @Builder
-    public static class Author {
+    public static class Author implements Entity{
         private String id;
         private String name;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+    }
+
+    public interface Entity {
+        String getId();
+        void setId(String id);
     }
 }
